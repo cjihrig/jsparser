@@ -402,7 +402,7 @@
 	};
 
 	ast.AssignmentExpressionNode.prototype.print = function(indent, indentChar) {
-		return "(" + this.left.print("", "") + ") " + this.operator + " (" + this.right.print("", "") + ")";
+		return this.left.print("", "") + " " + this.operator + " (" + this.right.print("", "") + ")";
 	};
 
 	ast.UpdateExpressionNode.prototype.print = function(indent, indentChar) {
