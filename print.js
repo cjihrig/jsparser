@@ -3,6 +3,45 @@
 (function(parser) {
 	var ast = parser.ast;
 
+	function needBrackets(firstToken,secondToken) {
+		var firstOp = firstToken.operator;
+		if ((firstToken.type == "UnaryExpression") &&
+		    (firstToken.operator == "-" || firstToken.operator == "+")) {
+			 firstOp += "unary";
+		}
+		var secondOp = secondToken.operator;
+		if ((secondToken.type == "UnaryExpression") &&
+		    (secondToken.operator == "-" || secondToken.operator == "+")) {
+			 secondOp += "unary";
+		}
+		var precedence = new Array(  // from less to most preferent
+			new Array("=","+=","-=","*=","/=","%=","<<=",">>=",">>>=","&=","^=","|="),
+			"||",
+			"&&",
+			"|",
+			"^",
+			"&",
+			new Array("<","<=",">",">=","in","instanceof"),
+			new Array("<<",">>",">>>"),
+			new Array("+","-"),
+			new Array("*","/","%"),
+			new Array("!","~","+unary","-unary","typeof","void","delete"),
+			new Array("++","--")
+		);
+		var firstPos = precedence.length, secondPos = precedence.length;
+		for (var i=0;i<precedence.length;i++) {
+			for (var j=0;j<precedence[i].length;j++) {
+				if (firstOp === precedence[i][j]) {
+					firstPos = i;
+				}
+				if (secondOp === precedence[i][j]) {
+					secondPos = i;
+				}
+			}
+		}
+		return (firstPos > secondPos);
+	}
+
 	ast.ProgramNode.prototype.print = function(indent, indentChar) {
 		var elements = this.body;
 		var str = "";
@@ -392,29 +431,66 @@
 
 		if (operator === "delete" || operator === "void" || operator === "typeof") {
 			return operator + " (" + this.argument.print("", "") + ")";
-		} else {
+		} else if (needBrackets(this, this.argument)) {
 			return operator + "(" + this.argument.print("", "") + ")";
+		} else {
+			return operator + this.argument.print("", "")
 		}
 	};
 
 	ast.BinaryExpressionNode.prototype.print = function(indent, indentChar) {
-		return "(" + this.left.print("", "") + ") " + this.operator + " (" + this.right.print("", "") + ")";
+		var str = "";
+		if (needBrackets(this,this.left)) {
+			str += "(" + this.left.print("", "") + ")";
+		} else {
+			str += this.left.print("", "");
+		}
+		str += " " + this.operator + " ";
+		if (needBrackets(this,this.right)) {
+			str += "(" + this.right.print("", "") + ")";
+		} else {
+			str += this.right.print("", "");
+		}
+		return str;
 	};
 
 	ast.AssignmentExpressionNode.prototype.print = function(indent, indentChar) {
-		return this.left.print("", "") + " " + this.operator + " (" + this.right.print("", "") + ")";
+		var str = this.left.print("", "") + " " + this.operator + " ";
+		if (needBrackets(this,this.right)) {
+			str += "(" + this.right.print("", "") + ")";
+		} else {
+			str += this.right.print("", "");
+		}
+		return str;
 	};
 
 	ast.UpdateExpressionNode.prototype.print = function(indent, indentChar) {
-		if (this.prefix) {
-			return "(" + this.operator + this.argument.print("", "") + ")";
-		} else {
-			return "(" + this.argument.print("", "") + this.operator + ")";
+		var str = this.argument.print("", "");
+		if (needBrackets(this, this.argument)) {
+			str = "(" + str + ")";
 		}
+		if (this.prefix) {
+			str = this.operator + str;
+		} else {
+			str = str + this.operator;
+		}
+		return str;
 	};
 
 	ast.LogicalExpressionNode.prototype.print = function(indent, indentChar) {
-		return "(" + this.left.print("", "") + ") " + this.operator + " (" + this.right.print("", "") + ")";
+		var str = "";
+		if (needBrackets(this,this.left)) {
+			str += "(" + this.left.print("", "") + ")";
+		} else {
+			str += this.left.print("", "");
+		}
+		str += " " + this.operator + " ";
+		if (needBrackets(this,this.right)) {
+			str += "(" + this.right.print("", "") + ")";
+		} else {
+			str += this.right.print("", "");
+		}
+		return str;
 	};
 
 	ast.ConditionalExpressionNode.prototype.print = function(indent, indentChar) {
