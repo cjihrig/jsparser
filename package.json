@@ -1,0 +1,25 @@
+{
+  "name": "jsparser",
+  "version": "0.0.1",
+  "author": "Colin J. Ihrig <cjihrig@gmail.com> (http://www.cjihrig.com/)",
+  "description": "An ECMAScript 5.1 parser, written in JavaScript.",
+  "main": "ecmascript.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/cjihrig/jsparser.git"
+  },
+  "keywords": [
+    "parser",
+    "javascript"
+  ],
+  "bugs": {
+    "url": "https://github.com/cjihrig/jsparser/issues"
+  },
+  "homepage": "https://github.com/cjihrig/jsparser"
+}
