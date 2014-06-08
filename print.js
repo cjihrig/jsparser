@@ -1,5 +1,6 @@
 "use strict";
 
+var nonCommutative = [ "-" , "/" , "%" ];
 var precedence = [  // from less to most preferent
 	[ "=", "+=", "-=", "*=", "/=", "%=", "<<=", ">>=", ">>>=", "&=", "^=", "|=" ],
 	"||",
@@ -18,16 +19,23 @@ var precedence = [  // from less to most preferent
 (function(parser) {
 	var ast = parser.ast;
 
-	function needBrackets(firstToken, secondToken) {
-		var firstOp = firstToken.operator;
-		if (firstToken.type === "UnaryExpression" &&
-		    (firstToken.operator === "-" || firstToken.operator === "+")) {
+	function needBrackets(parentToken, childToken, childPrecedesParent) {
+		var firstOp = parentToken.operator;
+		if (parentToken.type === "UnaryExpression" &&
+		    (parentToken.operator === "-" || parentToken.operator === "+")) {
 			 firstOp += "unary";
 		}
-		var secondOp = secondToken.operator;
-		if (secondToken.type == "UnaryExpression" &&
-		    (secondToken.operator === "-" || secondToken.operator === "+")) {
+		var secondOp = childToken.operator;
+		if (childToken.type == "UnaryExpression" &&
+		    (childToken.operator === "-" || childToken.operator === "+")) {
 			 secondOp += "unary";
+		}
+		if (!childPrecedesParent && childToken.type == "BinaryExpression") {
+			for (var i=0; i<nonCommutative.length; i++) {
+				if (firstOp == nonCommutative[i]) {
+					return true;
+				}
+			}
 		}
 		var firstPos = precedence.length;
 		var secondPos = precedence.length;
@@ -446,7 +454,7 @@ var precedence = [  // from less to most preferent
 	ast.BinaryExpressionNode.prototype.print = function(indent, indentChar) {
 		var str = "";
 
-		if (needBrackets(this, this.left)) {
+		if (needBrackets(this, this.left, true)) {
 			str += "(" + this.left.print("", "") + ")";
 		} else {
 			str += this.left.print("", "");
@@ -494,7 +502,7 @@ var precedence = [  // from less to most preferent
 	ast.LogicalExpressionNode.prototype.print = function(indent, indentChar) {
 		var str = "";
 
-		if (needBrackets(this, this.left)) {
+		if (needBrackets(this, this.left, true)) {
 			str += "(" + this.left.print("", "") + ")";
 		} else {
 			str += this.left.print("", "");
