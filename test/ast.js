@@ -1,10 +1,14 @@
-var lab = require("lab");
+var Lab = require("lab");
+var fs = require("fs");
 var parser = require("../ecmascript");
-var expect = lab.expect;
+
+// Test shortcuts
+var lab = exports.lab = Lab.script();
+var expect = Lab.expect;
 var before = lab.before;
 var after = lab.after;
-var describe = lab.experiment;
-var it = lab.test;
+var describe = lab.describe;
+var it = lab.it;
 
 describe("AST", function() {
   it("parses an empty program", function(done) {
@@ -371,5 +375,17 @@ describe("AST", function() {
     expect(finalizer.type).to.equal("BlockStatement");
     expect(finalizer.body.length).to.equal(0);
     done();
+  });
+});
+
+describe("Integration Tests", function() {
+  it("parses everything.js", function(done) {
+    var everything = require.resolve("everything.js");
+
+    fs.readFile(everything, function(err, source) {
+      expect(err).to.not.exist;
+      parser.parse(source.toString());
+      done();
+    });
   });
 });

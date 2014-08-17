@@ -8,7 +8,7 @@
     "example": "examples"
   },
   "scripts": {
-    "test": "node node_modules/lab/bin/lab -t 100"
+    "test": "node node_modules/lab/bin/lab -v -t 100"
   },
   "repository": {
     "type": "git",
@@ -22,7 +22,8 @@
     "url": "https://github.com/cjihrig/jsparser/issues"
   },
   "devDependencies": {
-    "lab": "3.x.x"
+    "everything.js": "0.0.x",
+    "lab": "4.x.x"
   },
   "homepage": "https://github.com/cjihrig/jsparser"
 }
