@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "author": "Colin J. Ihrig <cjihrig@gmail.com> (http://www.cjihrig.com/)",
   "description": "An ECMAScript 5.1 parser, written in JavaScript.",
+  "license": "MIT",
   "main": "ecmascript.js",
   "directories": {
     "example": "examples"
