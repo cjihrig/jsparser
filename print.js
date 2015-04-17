@@ -1,7 +1,59 @@
 "use strict";
 
+var nonCommutative = [ "-" , "/" , "%" ];
+var precedence = [  // from less to most preferent
+	[ "=", "+=", "-=", "*=", "/=", "%=", "<<=", ">>=", ">>>=", "&=", "^=", "|=" ],
+	"||",
+	"&&",
+	"|",
+	"^",
+	"&",
+	[ "<", "<=", ">", ">=", "in", "instanceof" ],
+	[ "<<", ">>", ">>>" ],
+	[ "+", "-" ],
+	[ "*", "/", "%" ],
+	[ "!", "~", "+unary", "-unary", "typeof", "void", "delete" ],
+	[ "++", "--" ]
+];
+
 (function(parser) {
 	var ast = parser.ast;
+
+	function needBrackets(parentToken, childToken, childPrecedesParent) {
+		var firstOp = parentToken.operator;
+		if (parentToken.type === "UnaryExpression" &&
+		    (parentToken.operator === "-" || parentToken.operator === "+")) {
+			 firstOp += "unary";
+		}
+		var secondOp = childToken.operator;
+		if (childToken.type == "UnaryExpression" &&
+		    (childToken.operator === "-" || childToken.operator === "+")) {
+			 secondOp += "unary";
+		}
+		if (!childPrecedesParent && childToken.type == "BinaryExpression") {
+			for (var i=0; i<nonCommutative.length; i++) {
+				if (firstOp == nonCommutative[i]) {
+					return true;
+				}
+			}
+		}
+		var firstPos = precedence.length;
+		var secondPos = precedence.length;
+		for (var i = 0; i < precedence.length; i++) {
+			for (var j = 0; j < precedence[i].length; j++) {
+				var operation = precedence[i][j];
+				if (firstOp === operation) {
+					firstPos = i;
+				}
+
+				if (secondOp === operation) {
+					secondPos = i;
+				}
+			}
+		}
+
+		return firstPos > secondPos;
+	}
 
 	ast.ProgramNode.prototype.print = function(indent, indentChar) {
 		var elements = this.body;
@@ -392,29 +444,79 @@
 
 		if (operator === "delete" || operator === "void" || operator === "typeof") {
 			return operator + " (" + this.argument.print("", "") + ")";
-		} else {
+		} else if (needBrackets(this, this.argument)) {
 			return operator + "(" + this.argument.print("", "") + ")";
+		} else {
+			return operator + this.argument.print("", "");
 		}
 	};
 
 	ast.BinaryExpressionNode.prototype.print = function(indent, indentChar) {
-		return "(" + this.left.print("", "") + ") " + this.operator + " (" + this.right.print("", "") + ")";
+		var str = "";
+
+		if (needBrackets(this, this.left, true)) {
+			str += "(" + this.left.print("", "") + ")";
+		} else {
+			str += this.left.print("", "");
+		}
+
+		str += " " + this.operator + " ";
+
+		if (needBrackets(this, this.right)) {
+			str += "(" + this.right.print("", "") + ")";
+		} else {
+			str += this.right.print("", "");
+		}
+
+		return str;
 	};
 
 	ast.AssignmentExpressionNode.prototype.print = function(indent, indentChar) {
-		return this.left.print("", "") + " " + this.operator + " (" + this.right.print("", "") + ")";
+		var str = this.left.print("", "") + " " + this.operator + " ";
+
+		if (needBrackets(this, this.right)) {
+			str += "(" + this.right.print("", "") + ")";
+		} else {
+			str += this.right.print("", "");
+		}
+
+		return str;
 	};
 
 	ast.UpdateExpressionNode.prototype.print = function(indent, indentChar) {
-		if (this.prefix) {
-			return "(" + this.operator + this.argument.print("", "") + ")";
-		} else {
-			return "(" + this.argument.print("", "") + this.operator + ")";
+		var str = this.argument.print("", "");
+
+		if (needBrackets(this, this.argument)) {
+			str = "(" + str + ")";
 		}
+
+		if (this.prefix) {
+			str = this.operator + str;
+		} else {
+			str = str + this.operator;
+		}
+
+		return str;
 	};
 
 	ast.LogicalExpressionNode.prototype.print = function(indent, indentChar) {
-		return "(" + this.left.print("", "") + ") " + this.operator + " (" + this.right.print("", "") + ")";
+		var str = "";
+
+		if (needBrackets(this, this.left, true)) {
+			str += "(" + this.left.print("", "") + ")";
+		} else {
+			str += this.left.print("", "");
+		}
+
+		str += " " + this.operator + " ";
+
+		if (needBrackets(this, this.right)) {
+			str += "(" + this.right.print("", "") + ")";
+		} else {
+			str += this.right.print("", "");
+		}
+
+		return str;
 	};
 
 	ast.ConditionalExpressionNode.prototype.print = function(indent, indentChar) {
@@ -497,3 +599,4 @@
 		return this.value;
 	};
 })(ecmascript);
+

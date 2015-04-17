@@ -1553,7 +1553,7 @@ function parseRegularExpressionLiteral(literal) {
 }
 
 function parseNumericLiteral(literal) {
-	if (literal.charAt(0) === "0") {
+	if (literal.charAt(0) === "0" && Number(literal)%1 === 0) {
 		if (literal.charAt(1).toLowerCase() === "x") {
 			return parseInt(literal, 16);
 		} else {
