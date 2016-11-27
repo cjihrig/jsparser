@@ -599,6 +599,9 @@ FormalParameterList
 
 FunctionBody
     : SourceElements
+		{
+			$$ = new BlockStatementNode($1, createSourceLocation(null, @1, @1))
+		}
     ;
 
 Program
